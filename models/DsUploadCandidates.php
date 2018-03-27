@@ -42,8 +42,8 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
+            //[['created_at', 'updated_at'], 'required'],
             [['main_proid', 'child_proid', 'created_at', 'updated_at'], 'integer'],
-            [['created_at', 'updated_at'], 'required'],
             [['main_class', 'child_class', 'groupstoupload'], 'string', 'max' => 255],
         ];
     }
