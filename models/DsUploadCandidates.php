@@ -2,7 +2,10 @@
 
 namespace greeschenko\prozorrods\models;
 
+use Yii;
 use yii\behaviors\TimestampBehavior;
+use greeschenko\prozorrods\helpers\DSDriver;
+use greeschenko\file\models\Attachments;
 
 /**
  * This is the model class for table "{{%ds_upload_candidates}}".
@@ -18,6 +21,26 @@ use yii\behaviors\TimestampBehavior;
  */
 class DsUploadCandidates extends \yii\db\ActiveRecord
 {
+    public $module;
+    public $dsapi;
+
+    public $typesbyclass = [
+        'greeschenko\prozorrotender\models\TenderBid' => '/bids/',
+    ];
+
+    public function init()
+    {
+        parent::init();
+
+        $this->module = Yii::$app->getModule('ds');
+
+        $this->dsapi = new DSDriver(
+            $this->module->dsurl,
+            $this->module->dsname,
+            $this->module->dskey
+        );
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -44,7 +67,8 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
         return [
             //[['created_at', 'updated_at'], 'required'],
             [['main_proid', 'child_proid', 'created_at', 'updated_at'], 'integer'],
-            [['main_class', 'child_class', 'groupstoupload'], 'string', 'max' => 255],
+            [['main_class', 'child_class'], 'string', 'max' => 255],
+            [['groupstoupload'], 'string'],
         ];
     }
 
@@ -63,5 +87,175 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
         ];
+    }
+
+    /**
+     * register and upload doc and update doc attributes.
+     */
+    public function send()
+    {
+        foreach (json_decode($this->groupstoupload) as $i => $group) {
+            $data = Attachments::find()
+                ->where(['group' => $group])
+                ->all();
+
+            foreach ($data as $one) {
+                $req = [];
+                $tempreq = [];
+                $filemodel = $one->file->getData();
+
+                if (isset($filemodel['url'])) {
+                    $file = realpath('.'.$filemodel['url']);
+                } else {
+                    $file = realpath('.'.$filemodel['big']);
+                }
+
+                $data = [
+                    'data' => [
+                        'hash' => $one->hash,
+                    ],
+                ];
+
+                $req = $this->dsapi->registerDoc($data);
+
+                //echo '<pre>';
+                //print_r($req);
+                //echo '</pre>';
+
+                if (isset($req->data) and isset($req->upload_url)) {
+                    $req = $this->dsapi->uploadDoc(
+                        $req->upload_url,
+                        $file
+                    );
+                    //echo '<pre>';
+                    //print_r($req);
+                    //echo '</pre>';
+                    if (isset($req->data) and isset($req->data->url)) {
+                        $main = $this->main_class;
+                        $main = $main::findOne($this->main_proid);
+                        if ($this->child_class != '') {
+                            $child = $this->child_class;
+                            $child = $child::findOne($this->child_proid);
+                        }
+                        if ($filemodel['type'] == 3) {
+                            //$data = [
+                                //'data' => [
+                                    //'url' => trim($filemodel['url']),
+                                    //'title' => ($one->title == '')
+                                        //? $filemodel['name'].$filemodel['ext']
+                                        //: $one->title,
+                                    //'description' => $one->description,
+                                    //'documentType' => $i,
+                                    //'index' => $one->index,
+                                //],
+                            //];
+
+                            //if ($one->bind != '') {
+                                //$req = $this->api->updateLink(
+                                    //$this->id,
+                                    //$one->bind,
+                                    //$data,
+                                    //$this->ownerElement->el_token
+                                //);
+                            //} else {
+                                //$req = $this->api->addLink(
+                                    //$this->id,
+                                    //$data,
+                                    //$this->ownerElement->el_token
+                                //);
+                            //}
+
+                            //if (!isset($req->data) and $req->status_code != 200) {
+                                //echo '<h1>Помилка збереження посилання '.$filemodel['url'].'</h1>';
+                                //echo '<p>Перевірте коректність формату посилання, або передайте код нижче адміністратору</p>';
+                                //echo '<hr>';
+                                //echo '<pre>';
+                                //print_r($req);
+                                //die;
+                            //} else {
+                                //$tempreq = $req;
+                            //}
+                        } else {
+                            $data = [
+                                    'data' => [
+                                        'url' => $req->data->url,
+                                        'title' => ($one->title == '')
+                                            ? $filemodel['name'].$filemodel['ext']
+                                            : $one->title,
+                                        'description' => 'ddddjk',
+                                        'format' => mime_content_type($file),
+                                        'hash' => $one->hash,
+                                        //'index' => $one->index,
+                                    ],
+                                ];
+
+                            if ($i != '') {
+                                $data['data']['documentType'] = $i;
+                            }
+
+                            if ($one->description != '') {
+                                $data['data']['description'] = $one->description;
+                            }
+
+                            //echo '<pre>';
+                            //print_r($data);
+                            //echo '</pre>';
+
+                            if ($one->bind != '') {
+                                $req = $main->api->getDocData(
+                                        $main->id,
+                                        $this->typesbyclass[$this->child_class],
+                                        $child->id,
+                                        $one->bind
+                                    );
+                                if (!isset($req->data)) {
+                                    throw new \yii\web\HttpException(501, 'Помилка завантаження информації про файл:'.json_encode($req));
+                                } elseif ($req->data->hash != $one->hash) {
+                                    $req = $main->api->updateDocData(
+                                            $main->id,
+                                            $this->typesbyclass[$this->child_class],
+                                            $child->id,
+                                            $one->bind,
+                                            $data,
+                                            $child->token
+                                        );
+                                }
+                            } else {
+                                $req = $main->api->sendDocData(
+                                        $main->id,
+                                        $this->typesbyclass[$this->child_class],
+                                        $child->id,
+                                        $data,
+                                        $child->token
+                                    );
+                            }
+
+                            echo '<pre>';
+                            print_r($req);
+                            echo '</pre>';
+
+                            if (!isset($req->data)) {
+                                throw new \yii\web\HttpException(501, 'Помилка відправки даних файлу до цбд:'.json_encode($req));
+                            } else {
+                                $tempreq = $req;
+                            }
+
+                            if (isset($tempreq->data)) {
+                                $one->bind = $tempreq->data->id;
+                            }
+                            if (!$one->save()) {
+                                print_r($one->errors);
+                            }
+
+                            die;
+                        }
+                    } else {
+                        throw new \yii\web\HttpException(501, 'Помилка завантаження файлу до DS:'.json_encode($req));
+                    }
+                } else {
+                    throw new \yii\web\HttpException(501, 'Помилка реестарації файлу в DS:'.json_encode($req));
+                }
+            }
+        }
     }
 }

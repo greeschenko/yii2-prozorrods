@@ -5,9 +5,26 @@ namespace greeschenko\prozorrods\controllers;
 use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
+use greeschenko\prozorrods\helpers\DSDriver;
+use greeschenko\prozorrods\models\DsUploadCandidates;
 
 class DocsController extends Controller
 {
+    public $dsapi;
+
+    public function init()
+    {
+        parent::init();
+
+        $this->module = Yii::$app->getModule('ds');
+
+        $this->dsapi = new DSDriver(
+            $this->module->dsurl,
+            $this->module->dsname,
+            $this->module->dskey
+        );
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -27,15 +44,22 @@ class DocsController extends Controller
         ];
     }
 
-    public function actionSend()
+    public function actionSend($id)
     {
-        $res = [];
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        //$res = [];
+        //\Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        if (Yii::$app->request->isPost and Yii::$app->request->isAjax) {
-            $res = [1];
+        //if (Yii::$app->request->isAjax) {
+            //$res = ['lsjdflsdfjl'];
+        //}
+
+        //return $res;
+        $candidate = DsUploadCandidates::findOne($id);
+
+        if ($candidate->send()) {
+            return true;
         }
 
-        return $res;
+        return false;
     }
 }
