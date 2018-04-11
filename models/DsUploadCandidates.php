@@ -118,18 +118,11 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
 
                 $req = $this->dsapi->registerDoc($data);
 
-                //echo '<pre>';
-                //print_r($req);
-                //echo '</pre>';
-
                 if (isset($req->data) and isset($req->upload_url)) {
                     $req = $this->dsapi->uploadDoc(
                         $req->upload_url,
                         $file
                     );
-                    //echo '<pre>';
-                    //print_r($req);
-                    //echo '</pre>';
                     if (isset($req->data) and isset($req->data->url)) {
                         $main = $this->main_class;
                         $main = $main::findOne($this->main_proid);
@@ -197,10 +190,6 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
                                 $data['data']['description'] = $one->description;
                             }
 
-                            //echo '<pre>';
-                            //print_r($data);
-                            //echo '</pre>';
-
                             if ($one->bind != '') {
                                 $req = $main->api->getDocData(
                                         $main->id,
@@ -230,10 +219,6 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
                                     );
                             }
 
-                            echo '<pre>';
-                            print_r($req);
-                            echo '</pre>';
-
                             if (!isset($req->data)) {
                                 throw new \yii\web\HttpException(501, 'Помилка відправки даних файлу до цбд:'.json_encode($req));
                             } else {
@@ -245,9 +230,11 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
                             }
                             if (!$one->save()) {
                                 print_r($one->errors);
+
+                                return false;
                             }
 
-                            die;
+                            $this->delete();
                         }
                     } else {
                         throw new \yii\web\HttpException(501, 'Помилка завантаження файлу до DS:'.json_encode($req));
@@ -257,5 +244,7 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
                 }
             }
         }
+
+        return true;
     }
 }

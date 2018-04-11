@@ -46,20 +46,23 @@ class DocsController extends Controller
 
     public function actionSend($id)
     {
-        //$res = [];
-        //\Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $res = [];
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        //if (Yii::$app->request->isAjax) {
-            //$res = ['lsjdflsdfjl'];
-        //}
+        if (Yii::$app->request->isAjax) {
+            //$res['error'] = 'test error';
+            $res['done'] = 'test';
 
-        //return $res;
-        $candidate = DsUploadCandidates::findOne($id);
-
-        if ($candidate->send()) {
-            return true;
+            $candidate = DsUploadCandidates::findOne($id);
+            if ($candidate != null) {
+                if (!$candidate->send()) {
+                    $res['error'] = 'Помилка відправки документа';
+                }
+            } else {
+                $res['notfound'] = '1';
+            }
         }
 
-        return false;
+        return $res;
     }
 }
