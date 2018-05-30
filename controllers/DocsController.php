@@ -16,7 +16,7 @@ class DocsController extends Controller
     {
         parent::init();
 
-        $this->module = Yii::$app->getModule('ds');
+        //$this->module = Yii::$app->getModule('ds');
 
         $this->dsapi = new DSDriver(
             $this->module->dsurl,
@@ -50,9 +50,6 @@ class DocsController extends Controller
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         if (Yii::$app->request->isAjax) {
-            //$res['error'] = 'test error';
-            $res['done'] = 'test';
-
             $candidate = DsUploadCandidates::findOne($id);
             if ($candidate != null) {
                 if (!$candidate->send()) {

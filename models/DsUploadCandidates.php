@@ -32,13 +32,16 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
     {
         parent::init();
 
-        $this->module = Yii::$app->getModule('ds');
+        //$this->module = Yii::$app->getModule('ds');
+        $this->module = Yii::$app->controller->module;
 
-        $this->dsapi = new DSDriver(
-            $this->module->dsurl,
-            $this->module->dsname,
-            $this->module->dskey
-        );
+        if (isset($this->module->dsurl)) {
+            $this->dsapi = new DSDriver(
+                $this->module->dsurl,
+                $this->module->dsname,
+                $this->module->dskey
+            );
+        }
     }
 
     /**
@@ -118,122 +121,45 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
 
                 $req = $this->dsapi->registerDoc($data);
 
+                //echo '<pre>';
+                //print_r($req);
+                //echo '</pre>';
+
                 if (isset($req->data) and isset($req->upload_url)) {
                     $req = $this->dsapi->uploadDoc(
                         $req->upload_url,
                         $file
                     );
                     if (isset($req->data) and isset($req->data->url)) {
+                        //echo '<pre>';
+                        //print_r($req);
+                        //echo '</pre>';
+                        //die;
                         $main = $this->main_class;
                         $main = $main::findOne($this->main_proid);
-                        if ($this->child_class != '') {
-                            $child = $this->child_class;
-                            $child = $child::findOne($this->child_proid);
+
+                        $data = [
+                                'data' => [
+                                    'url' => $req->data->url,
+                                    'title' => ($one->title == '')
+                                        ? $filemodel['name'].$filemodel['ext']
+                                        : $one->title,
+                                    'description' => '',
+                                    'format' => mime_content_type($file),
+                                    'hash' => $one->hash,
+                                    'index' => $one->index,
+                                ],
+                            ];
+
+                        if ($i != '') {
+                            $data['data']['documentType'] = $i;
                         }
-                        if ($filemodel['type'] == 3) {
-                            //$data = [
-                                //'data' => [
-                                    //'url' => trim($filemodel['url']),
-                                    //'title' => ($one->title == '')
-                                        //? $filemodel['name'].$filemodel['ext']
-                                        //: $one->title,
-                                    //'description' => $one->description,
-                                    //'documentType' => $i,
-                                    //'index' => $one->index,
-                                //],
-                            //];
 
-                            //if ($one->bind != '') {
-                                //$req = $this->api->updateLink(
-                                    //$this->id,
-                                    //$one->bind,
-                                    //$data,
-                                    //$this->ownerElement->el_token
-                                //);
-                            //} else {
-                                //$req = $this->api->addLink(
-                                    //$this->id,
-                                    //$data,
-                                    //$this->ownerElement->el_token
-                                //);
-                            //}
+                        if ($one->description != '') {
+                            $data['data']['description'] = $one->description;
+                        }
 
-                            //if (!isset($req->data) and $req->status_code != 200) {
-                                //echo '<h1>Помилка збереження посилання '.$filemodel['url'].'</h1>';
-                                //echo '<p>Перевірте коректність формату посилання, або передайте код нижче адміністратору</p>';
-                                //echo '<hr>';
-                                //echo '<pre>';
-                                //print_r($req);
-                                //die;
-                            //} else {
-                                //$tempreq = $req;
-                            //}
-                        } else {
-                            $data = [
-                                    'data' => [
-                                        'url' => $req->data->url,
-                                        'title' => ($one->title == '')
-                                            ? $filemodel['name'].$filemodel['ext']
-                                            : $one->title,
-                                        'description' => 'ddddjk',
-                                        'format' => mime_content_type($file),
-                                        'hash' => $one->hash,
-                                        //'index' => $one->index,
-                                    ],
-                                ];
-
-                            if ($i != '') {
-                                $data['data']['documentType'] = $i;
-                            }
-
-                            if ($one->description != '') {
-                                $data['data']['description'] = $one->description;
-                            }
-
-                            if ($one->bind != '') {
-                                $req = $main->api->getDocData(
-                                        $main->id,
-                                        $this->typesbyclass[$this->child_class],
-                                        $child->id,
-                                        $one->bind
-                                    );
-                                if (!isset($req->data)) {
-                                    throw new \yii\web\HttpException(501, 'Помилка завантаження информації про файл:'.json_encode($req));
-                                } elseif ($req->data->hash != $one->hash) {
-                                    $req = $main->api->updateDocData(
-                                            $main->id,
-                                            $this->typesbyclass[$this->child_class],
-                                            $child->id,
-                                            $one->bind,
-                                            $data,
-                                            $child->token
-                                        );
-                                }
-                            } else {
-                                $req = $main->api->sendDocData(
-                                        $main->id,
-                                        $this->typesbyclass[$this->child_class],
-                                        $child->id,
-                                        $data,
-                                        $child->token
-                                    );
-                            }
-
-                            if (!isset($req->data)) {
-                                throw new \yii\web\HttpException(501, 'Помилка відправки даних файлу до цбд:'.json_encode($req));
-                            } else {
-                                $tempreq = $req;
-                            }
-
-                            if (isset($tempreq->data)) {
-                                $one->bind = $tempreq->data->id;
-                            }
-                            if (!$one->save()) {
-                                print_r($one->errors);
-
-                                return false;
-                            }
-
+                        if ($main->pubDocs($one, $data)) {
                             $this->delete();
                         }
                     } else {
