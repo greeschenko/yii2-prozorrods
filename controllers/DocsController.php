@@ -50,13 +50,15 @@ class DocsController extends Controller
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         if (Yii::$app->request->isAjax) {
-            $candidate = DsUploadCandidates::findOne($id);
-            if ($candidate != null) {
-                if (!$candidate->send()) {
-                    $res['error'] = 'Помилка відправки документа';
+            foreach (explode(',', $id) as $one) {
+                $candidate = DsUploadCandidates::findOne($one);
+                if ($candidate != null) {
+                    if (!$candidate->send()) {
+                        $res['error'] = 'Помилка відправки документа';
+                    }
+                } else {
+                    $res['notfound'] = '1';
                 }
-            } else {
-                $res['notfound'] = '1';
             }
         }
 
