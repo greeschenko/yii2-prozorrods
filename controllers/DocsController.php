@@ -47,9 +47,9 @@ class DocsController extends Controller
     public function actionSend($id)
     {
         $res = [];
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        //\Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        if (Yii::$app->request->isAjax) {
+        //if (Yii::$app->request->isAjax) {
             foreach (explode(',', $id) as $one) {
                 $candidate = DsUploadCandidates::findOne($one);
                 if ($candidate != null) {
@@ -60,7 +60,7 @@ class DocsController extends Controller
                     $res['notfound'] = '1';
                 }
             }
-        }
+        //}
 
         return $res;
     }

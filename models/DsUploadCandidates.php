@@ -62,6 +62,13 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
         ];
     }
 
+    public function beforeValidate()
+    {
+        $this->main_proid = (string) $this->main_proid;
+
+        return parent::beforeValidate();
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -69,8 +76,8 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
     {
         return [
             //[['created_at', 'updated_at'], 'required'],
-            [['main_proid', 'child_proid', 'created_at', 'updated_at'], 'integer'],
-            [['main_class', 'child_class'], 'string', 'max' => 255],
+            [['child_proid', 'created_at', 'updated_at'], 'integer'],
+            [['main_proid', 'main_class', 'child_class'], 'string', 'max' => 255],
             [['groupstoupload'], 'string'],
         ];
     }
@@ -137,6 +144,10 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
                         //die;
                         $main = $this->main_class;
                         $main = $main::findOne($this->main_proid);
+                        if ($main == null) {
+                            $main = $this->main_class;
+                            $main = $main::find()->where(['id' => $this->main_proid])->one();
+                        }
 
                         $data = [
                                 'data' => [
