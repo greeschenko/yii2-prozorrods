@@ -2,6 +2,8 @@
 
 namespace greeschenko\prozorrods;
 
+use greeschenko\prozorrods\models\DsUploadCandidates;
+
 class Module extends \yii\base\Module
 {
     const VER = '0.1-dev';
@@ -31,5 +33,22 @@ class Module extends \yii\base\Module
 
         $this->components = [
         ];
+    }
+
+    /**
+     * synchronous sending candidate.
+     */
+    public function sendCandidate($id)
+    {
+        $candidate = DsUploadCandidates::findOne($id);
+        if ($candidate != null) {
+            if ($candidate->send()) {
+                return true;
+            } else {
+                throw new \yii\web\HttpException(501, 'Помилка статичної відправки документу ID = '.$id);
+            }
+        }
+
+        return false;
     }
 }
