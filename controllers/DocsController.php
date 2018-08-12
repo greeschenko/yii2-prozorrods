@@ -37,7 +37,7 @@ class DocsController extends Controller
                     [
                         'allow' => true,
                         'actions' => ['send'],
-                        'roles' => ['@'],
+                        //'roles' => ['*'],
                     ],
                 ],
             ],

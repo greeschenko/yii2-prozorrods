@@ -138,10 +138,6 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
                         $file
                     );
                     if (isset($req->data) and isset($req->data->url)) {
-                        //echo '<pre>';
-                        //print_r($req);
-                        //echo '</pre>';
-                        //die;
                         $main = $this->main_class;
                         $main = $main::findOne($this->main_proid);
                         if ($main == null) {
