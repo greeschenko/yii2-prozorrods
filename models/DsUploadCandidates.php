@@ -139,10 +139,10 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
                     );
                     if (isset($req->data) and isset($req->data->url)) {
                         $main = $this->main_class;
-                        $main = $main::findOne($this->main_proid);
-                        if ($main == null) {
-                            $main = $this->main_class;
+                        if (strlen($this->main_proid) > 16) {
                             $main = $main::find()->where(['id' => $this->main_proid])->one();
+                        } else {
+                            $main = $main::find()->where(['proid' => $this->main_proid])->one();
                         }
 
                         $data = [
