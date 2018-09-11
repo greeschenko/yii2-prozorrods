@@ -35,6 +35,10 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
         //$this->module = Yii::$app->getModule('ds');
         $this->module = Yii::$app->controller->module;
 
+        if ($this->module->id == 'prozorrosale2') {
+            $this->module = Yii::$app->getModule('ds2');
+        }
+
         if (isset($this->module->dsurl)) {
             $this->dsapi = new DSDriver(
                 $this->module->dsurl,
