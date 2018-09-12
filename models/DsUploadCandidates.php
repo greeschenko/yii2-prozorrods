@@ -162,7 +162,7 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
                                 ],
                             ];
 
-                        if ($i != '') {
+                        if ($i != '' and $i != '_empty_') {
                             $data['data']['documentType'] = $i;
                         }
 
