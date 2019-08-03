@@ -177,7 +177,7 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
                         throw new \yii\web\HttpException(501, 'Помилка завантаження файлу до DS:'.json_encode($req));
                     }
                 } else {
-                    throw new \yii\web\HttpException(501, 'Помилка реестарації файлу в DS:'.json_encode($req));
+                    throw new \yii\web\HttpException(501, 'Помилка реестрації файлу в DS:'.json_encode($req));
                 }
             }
         }
