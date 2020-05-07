@@ -135,12 +135,17 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
                 //echo '<pre>';
                 //print_r($req);
                 //echo '</pre>';
+                //die;
 
                 if (isset($req->data) and isset($req->upload_url)) {
                     $req = $this->dsapi->uploadDoc(
                         $req->upload_url,
                         $file
                     );
+                    //echo '<pre>';
+                    //print_r($req);
+                    //echo '</pre>';
+                    //die;
                     if (isset($req->data) and isset($req->data->url)) {
                         $main = $this->main_class;
                         if (strlen($this->main_proid) > 16) {
@@ -158,7 +163,7 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
                                     'description' => '',
                                     'format' => mime_content_type($file),
                                     'hash' => $one->hash,
-                                    'index' => $one->index,
+                                    'index' => ($i == 'illustration') ? $one->index : 0,
                                 ],
                             ];
 
