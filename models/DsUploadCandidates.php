@@ -200,7 +200,7 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
 
             foreach ($data as $one) {
 
-                $res[] = ['id' => $one->id, 'name' => $one->file->name . ".".$one->file->ext];
+                $res[] = ['id' => $one->id, 'name' => $one->file->name . ".".$one->file->ext, 'type' => $i];
 
             }
         }

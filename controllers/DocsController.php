@@ -69,7 +69,7 @@ class DocsController extends Controller
         return $res;
     }
 
-    public function actionSendOne($id, $dsuc)
+    public function actionSendOne($id, $dsuc, $i)
     {
         $res = [];
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
