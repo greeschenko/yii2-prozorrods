@@ -189,4 +189,22 @@ class DsUploadCandidates extends \yii\db\ActiveRecord
 
         return true;
     }
+
+    public function getList()
+    {
+        $res = [];
+        foreach (json_decode($this->groupstoupload) as $i => $group) {
+            $data = Attachments::find()
+                ->where(['group' => $group])
+                ->all();
+
+            foreach ($data as $one) {
+
+                $res[] = ['id' => $one->id, 'name' => $one->file->name . ".".$one->file->ext];
+
+            }
+        }
+
+        return $res;
+    }
 }
